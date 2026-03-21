@@ -1,0 +1,241 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/tests/Zooper.Tools.Marten.ApplyEnforcer.Tests/Zooper.Tools.Marten.ApplyEnforcer.Tests.csproj": {}
+  },
+  "projects": {
+    "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj",
+        "projectName": "Zooper.Tools.Marten.ApplyEnforcer.Analyzers",
+        "projectPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj",
+        "packagesPath": "/Users/daniel/.nuget/packages/",
+        "outputPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/daniel/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "Microsoft.CodeAnalysis.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.11.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[4.14.0, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj",
+        "projectName": "Zooper.Tools.Marten.ApplyEnforcer.Contracts",
+        "projectPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj",
+        "packagesPath": "/Users/daniel/.nuget/packages/",
+        "outputPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/daniel/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Zooper.Lion": {
+              "target": "Package",
+              "version": "[2.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/tests/Zooper.Tools.Marten.ApplyEnforcer.Tests/Zooper.Tools.Marten.ApplyEnforcer.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/tests/Zooper.Tools.Marten.ApplyEnforcer.Tests/Zooper.Tools.Marten.ApplyEnforcer.Tests.csproj",
+        "projectName": "Zooper.Tools.Marten.ApplyEnforcer.Tests",
+        "projectPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/tests/Zooper.Tools.Marten.ApplyEnforcer.Tests/Zooper.Tools.Marten.ApplyEnforcer.Tests.csproj",
+        "packagesPath": "/Users/daniel/.nuget/packages/",
+        "outputPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/tests/Zooper.Tools.Marten.ApplyEnforcer.Tests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/daniel/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj": {
+                "projectPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj"
+              },
+              "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj": {
+                "projectPath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Marten": {
+              "target": "Package",
+              "version": "[8.26.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[4.14.0, )"
+            },
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.12.0, )"
+            },
+            "Zooper.Lion": {
+              "target": "Package",
+              "version": "[2.1.0, )"
+            },
+            "coverlet.collector": {
+              "target": "Package",
+              "version": "[6.0.2, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.2, )"
+            },
+            "xunit.runner.visualstudio": {
+              "target": "Package",
+              "version": "[2.8.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

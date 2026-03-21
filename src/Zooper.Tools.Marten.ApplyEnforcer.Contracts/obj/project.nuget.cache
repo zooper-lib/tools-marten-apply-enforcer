@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "mFewIUiLe44=",
+  "success": true,
+  "projectFilePath": "/Users/daniel/Development/Projects/Zooper/tools-marten-apply-enforcer/src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj",
+  "expectedPackageFiles": [
+    "/Users/daniel/.nuget/packages/fluentvalidation/11.5.2/fluentvalidation.11.5.2.nupkg.sha512",
+    "/Users/daniel/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/Users/daniel/.nuget/packages/zooper.lion/2.1.0/zooper.lion.2.1.0.nupkg.sha512"
+  ],
+  "logs": []
+}
