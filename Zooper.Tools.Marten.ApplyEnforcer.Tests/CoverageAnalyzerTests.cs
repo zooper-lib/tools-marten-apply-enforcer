@@ -400,6 +400,161 @@ public sealed class CoverageAnalyzerTests
         Assert.Contains("IItemAdded", diagnostic.GetMessage());
     }
 
+    [Fact]
+    public async Task Reports_missing_handler_when_events_in_separate_file_and_namespace()
+    {
+        var aggregateSource = """
+            using System;
+            using Zooper.Lion.Domain.Entities;
+            using Zooper.Tools.Marten.ApplyEnforcer.Contracts;
+            using Demo.Events;
+
+            namespace Demo.Aggregates;
+
+            [EventSourcedAggregate]
+            public sealed record Order : IAggregateRoot<Guid>
+            {
+                public Guid Id { get; init; }
+                public void Apply(IItemAdded e) { }
+            }
+            """;
+
+        var eventsSource = """
+            using System;
+            using Zooper.Tools.Marten.ApplyEnforcer.Contracts;
+            using Demo.Aggregates;
+
+            namespace Demo.Events;
+
+            public interface IOrderCreated : IDomainEvent<Order>
+            {
+                public sealed record V1(Guid OrderId) : IOrderCreated;
+            }
+
+            public interface IItemAdded : IDomainEvent<Order>
+            {
+                public sealed record V1(string ItemName) : IItemAdded;
+            }
+            """;
+
+        var result = await TestCompilationFactory.RunAsync(aggregateSource, eventsSource);
+        var diagnostics = Marten001(result);
+
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("IOrderCreated", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task Reports_missing_Create_when_many_Apply_handlers_exist()
+    {
+        var source = Preamble + """
+            [EventSourcedAggregate]
+            public sealed record AudioFile : IAggregateRoot<Guid>
+            {
+                public Guid Id { get; init; }
+
+                // Create handler is missing!
+
+                public void Apply(IAudioFileMarkedAsNotFoundDomainEvent e) { }
+                public void Apply(IAudioFileLocalRestoredDomainEvent e) { }
+                public void Apply(IAudioFileSpotifyRestoredDomainEvent e) { }
+                public void Apply(IAudioFileUnboundDomainEvent e) { }
+                public void Apply(IAudioFileBoundDomainEvent e) { }
+                public void Apply(IAudioFileRenamedDomainEvent e) { }
+                public void Apply(IAudioFileMetadataAnalyzingDomainEvent e) { }
+                public void Apply(IAudioFileMetadataAnalyzedDomainEvent e) { }
+                public void Apply(IAudioFileMetadataUpdatedDomainEvent e) { }
+                public void Apply(IAudioFileMetadataAnalysisFailedDomainEvent e) { }
+                public void Apply(IAudioFileWaveformGeneratingDomainEvent e) { }
+                public void Apply(IAudioFileWaveformAvailableDomainEvent e) { }
+                public void Apply(IAudioFileWaveformGenerationFailedDomainEvent e) { }
+                public void Apply(IAudioFileWaveformAnalysisResetDomainEvent e) { }
+            }
+
+            public interface IAudioFileCreatedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1(Guid Id) : IAudioFileCreatedDomainEvent;
+            }
+
+            public interface IAudioFileMarkedAsNotFoundDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileMarkedAsNotFoundDomainEvent;
+            }
+
+            public interface IAudioFileLocalRestoredDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileLocalRestoredDomainEvent;
+            }
+
+            public interface IAudioFileSpotifyRestoredDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileSpotifyRestoredDomainEvent;
+            }
+
+            public interface IAudioFileUnboundDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileUnboundDomainEvent;
+            }
+
+            public interface IAudioFileBoundDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileBoundDomainEvent;
+            }
+
+            public interface IAudioFileRenamedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileRenamedDomainEvent;
+            }
+
+            public interface IAudioFileMetadataAnalyzingDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileMetadataAnalyzingDomainEvent;
+            }
+
+            public interface IAudioFileMetadataAnalyzedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileMetadataAnalyzedDomainEvent;
+            }
+
+            public interface IAudioFileMetadataUpdatedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileMetadataUpdatedDomainEvent;
+            }
+
+            public interface IAudioFileMetadataAnalysisFailedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileMetadataAnalysisFailedDomainEvent;
+            }
+
+            public interface IAudioFileWaveformGeneratingDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileWaveformGeneratingDomainEvent;
+            }
+
+            public interface IAudioFileWaveformAvailableDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileWaveformAvailableDomainEvent;
+            }
+
+            public interface IAudioFileWaveformGenerationFailedDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileWaveformGenerationFailedDomainEvent;
+            }
+
+            public interface IAudioFileWaveformAnalysisResetDomainEvent : IDomainEvent<AudioFile>
+            {
+                public sealed record V1() : IAudioFileWaveformAnalysisResetDomainEvent;
+            }
+            """;
+
+        var result = await TestCompilationFactory.RunAsync(source);
+        var diagnostics = Marten001(result);
+
+        // Should report exactly one missing handler: IAudioFileCreatedDomainEvent
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("IAudioFileCreatedDomainEvent", diagnostic.GetMessage());
+    }
+
     private static ImmutableArray<Diagnostic> Marten001(CompilationResult result)
     {
         return [.. result.AnalyzerDiagnostics.Where(d => d.Id == "MARTEN001")];
