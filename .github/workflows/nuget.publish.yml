@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  DOTNET_VERSION: "8.x"
+  DOTNET_VERSION: "10.x"
 
 jobs:
   setup:
@@ -84,8 +84,8 @@ jobs:
     strategy:
       matrix:
         project:
-          - src/Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj
-          - src/Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj
+          - Zooper.Tools.Marten.ApplyEnforcer.Analyzers/Zooper.Tools.Marten.ApplyEnforcer.Analyzers.csproj
+          - Zooper.Tools.Marten.ApplyEnforcer.Contracts/Zooper.Tools.Marten.ApplyEnforcer.Contracts.csproj
 
     steps:
       - name: Checkout Repository
