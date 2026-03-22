@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -45,7 +43,7 @@ public sealed class EventSourcedProjectionGenerator : IIncrementalGenerator
                     var aggregateKey = aggregateType.ToDisplayString();
                     if (!eventsByAggregate.TryGetValue(aggregateKey, out var bucket))
                     {
-                        bucket = new List<INamedTypeSymbol>();
+                        bucket = [];
                         eventsByAggregate[aggregateKey] = bucket;
                     }
 
@@ -59,7 +57,7 @@ public sealed class EventSourcedProjectionGenerator : IIncrementalGenerator
             foreach (var projection in projectionMap.Values.OrderBy(candidate => candidate.HostType.ToDisplayString()))
             {
                 eventsByAggregate.TryGetValue(projection.AggregateType.ToDisplayString(), out var aggregateEvents);
-                EmitCoverageSource(productionContext, projection, aggregateEvents ?? new List<INamedTypeSymbol>());
+                EmitCoverageSource(productionContext, projection, aggregateEvents ?? []);
             }
         });
     }
@@ -130,29 +128,19 @@ public sealed class EventSourcedProjectionGenerator : IIncrementalGenerator
         context.AddSource(hintName, SourceText.From(builder.ToString(), Encoding.UTF8));
     }
 
-    private sealed class ProjectionCandidate
+    private sealed class ProjectionCandidate(INamedTypeSymbol hostType, INamedTypeSymbol aggregateType)
     {
-        public ProjectionCandidate(INamedTypeSymbol hostType, INamedTypeSymbol aggregateType)
-        {
-            HostType = hostType;
-            AggregateType = aggregateType;
-        }
+        public INamedTypeSymbol HostType { get; } = hostType;
 
-        public INamedTypeSymbol HostType { get; }
-
-        public INamedTypeSymbol AggregateType { get; }
+        public INamedTypeSymbol AggregateType { get; } = aggregateType;
     }
 
-    private sealed class AggregateEventCandidate
+    private sealed class AggregateEventCandidate(
+        INamedTypeSymbol eventType,
+        ImmutableArray<INamedTypeSymbol> aggregateTypes)
     {
-        public AggregateEventCandidate(INamedTypeSymbol eventType, ImmutableArray<INamedTypeSymbol> aggregateTypes)
-        {
-            EventType = eventType;
-            AggregateTypes = aggregateTypes;
-        }
+        public INamedTypeSymbol EventType { get; } = eventType;
 
-        public INamedTypeSymbol EventType { get; }
-
-        public ImmutableArray<INamedTypeSymbol> AggregateTypes { get; }
+        public ImmutableArray<INamedTypeSymbol> AggregateTypes { get; } = aggregateTypes;
     }
 }

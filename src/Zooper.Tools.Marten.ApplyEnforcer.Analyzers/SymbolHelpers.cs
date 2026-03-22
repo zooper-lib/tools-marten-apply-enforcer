@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Zooper.Tools.Marten.ApplyEnforcer.Analyzers;
@@ -14,7 +12,7 @@ internal static class SymbolHelpers
     private const string GenericDomainEventName = "IDomainEvent`1";
     private const string MartenEventBoundaryName = "IEventBoundary`1";
 
-    public static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)
+    private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)
     {
         foreach (var type in namespaceSymbol.GetTypeMembers())
         {
@@ -33,7 +31,8 @@ internal static class SymbolHelpers
         }
     }
 
-    public static ImmutableArray<INamedTypeSymbol> GetAggregateEvents(Compilation compilation, INamedTypeSymbol aggregateType)
+    public static ImmutableArray<INamedTypeSymbol> GetAggregateEvents(Compilation compilation,
+        INamedTypeSymbol aggregateType)
     {
         var discovered = new List<INamedTypeSymbol>();
 
@@ -52,12 +51,13 @@ internal static class SymbolHelpers
             discovered.Add(candidate);
         }
 
-        return discovered
-            .Cast<ISymbol>()
-            .Distinct(SymbolEqualityComparer.Default)
-            .Cast<INamedTypeSymbol>()
-            .OrderBy(symbol => symbol.ToDisplayString())
-            .ToImmutableArray();
+        return
+        [
+            ..discovered
+                .Distinct(SymbolEqualityComparer.Default)
+                .Cast<INamedTypeSymbol>()
+                .OrderBy(symbol => symbol.ToDisplayString())
+        ];
     }
 
     public static bool HasApprovedHandler(INamedTypeSymbol hostType, INamedTypeSymbol eventType)
@@ -74,19 +74,13 @@ internal static class SymbolHelpers
                 continue;
             }
 
-            if (method.Name == "Create" && method.IsStatic)
+            switch (method.Name)
             {
-                return true;
-            }
-
-            if (method.Name == "Apply" && !method.IsStatic && method.ReturnsVoid)
-            {
-                return true;
-            }
-
-            if (method.Name == "ShouldDelete" && !method.IsStatic && method.ReturnType.SpecialType == SpecialType.System_Boolean)
-            {
-                return true;
+                case "Create" when method.IsStatic:
+                case "Apply" when method is { IsStatic: false, ReturnsVoid: true }:
+                case "ShouldDelete"
+                    when method is { IsStatic: false, ReturnType.SpecialType: SpecialType.System_Boolean }:
+                    return true;
             }
         }
 
@@ -123,14 +117,17 @@ internal static class SymbolHelpers
 
     public static ImmutableArray<INamedTypeSymbol> GetAggregateTypes(INamedTypeSymbol candidate)
     {
-        return candidate.AllInterfaces
-            .Where(@interface => HasMetadataName(@interface.OriginalDefinition, ContractsNamespace, GenericDomainEventName))
-            .Select(@interface => @interface.TypeArguments[0] as INamedTypeSymbol)
-            .Where(symbol => symbol is not null)
-            .Cast<ISymbol>()
-            .Distinct(SymbolEqualityComparer.Default)
-            .Cast<INamedTypeSymbol>()
-            .ToImmutableArray();
+        return
+        [
+            ..candidate.AllInterfaces
+                .Where(@interface =>
+                    HasMetadataName(@interface.OriginalDefinition, ContractsNamespace, GenericDomainEventName))
+                .Select(@interface => @interface.TypeArguments[0] as INamedTypeSymbol)
+                .Where(symbol => symbol is not null)
+                .Cast<ISymbol>()
+                .Distinct(SymbolEqualityComparer.Default)
+                .Cast<INamedTypeSymbol>()
+        ];
     }
 
     public static bool TryGetProjectionAggregate(INamedTypeSymbol candidate, out INamedTypeSymbol? aggregateType)
@@ -139,7 +136,8 @@ internal static class SymbolHelpers
 
         foreach (var attribute in candidate.GetAttributes())
         {
-            if (attribute.AttributeClass is null || !HasMetadataName(attribute.AttributeClass, ContractsNamespace, EventSourcedProjectionAttributeName))
+            if (attribute.AttributeClass is null || !HasMetadataName(attribute.AttributeClass, ContractsNamespace,
+                    EventSourcedProjectionAttributeName))
             {
                 continue;
             }
@@ -162,12 +160,9 @@ internal static class SymbolHelpers
     {
         yield return type;
 
-        foreach (var nestedType in type.GetTypeMembers())
+        foreach (var nested in type.GetTypeMembers().SelectMany(GetTypeAndNestedTypes))
         {
-            foreach (var nested in GetTypeAndNestedTypes(nestedType))
-            {
-                yield return nested;
-            }
+            yield return nested;
         }
     }
 

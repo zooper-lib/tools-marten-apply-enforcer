@@ -1,14 +1,7 @@
-using System;
-
 namespace Zooper.Tools.Marten.ApplyEnforcer.Contracts;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class EventSourcedProjectionAttribute : Attribute
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class EventSourcedProjectionAttribute(Type aggregateType) : Attribute
 {
-    public EventSourcedProjectionAttribute(Type aggregateType)
-    {
-        AggregateType = aggregateType ?? throw new ArgumentNullException(nameof(aggregateType));
-    }
-
-    public Type AggregateType { get; }
+    public Type AggregateType { get; } = aggregateType ?? throw new ArgumentNullException(nameof(aggregateType));
 }

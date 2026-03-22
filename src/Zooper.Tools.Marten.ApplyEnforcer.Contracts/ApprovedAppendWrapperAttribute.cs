@@ -1,8 +1,6 @@
-using System;
-
 namespace Zooper.Tools.Marten.ApplyEnforcer.Contracts;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class ApprovedAppendWrapperAttribute : Attribute
 {
 }

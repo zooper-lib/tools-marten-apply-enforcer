@@ -9,7 +9,7 @@ namespace Zooper.Tools.Marten.ApplyEnforcer.Analyzers;
 public sealed class RawAppendAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticCatalog.ForbiddenRawAppend);
+        [DiagnosticCatalog.ForbiddenRawAppend];
 
     public override void Initialize(AnalysisContext context)
     {
@@ -26,7 +26,7 @@ public sealed class RawAppendAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (SymbolHelpers.IsApprovedAppendWrapper(context.ContainingSymbol?.ContainingType))
+        if (SymbolHelpers.IsApprovedAppendWrapper(context.ContainingSymbol.ContainingType))
         {
             return;
         }

@@ -30,7 +30,7 @@ public sealed class OrderProjection :
 {
     public Guid Id { get; private set; }
 
-    public List<string> Items { get; } = new();
+    public List<string> Items { get; } = [];
 
     public bool IsCancelled { get; private set; }
 

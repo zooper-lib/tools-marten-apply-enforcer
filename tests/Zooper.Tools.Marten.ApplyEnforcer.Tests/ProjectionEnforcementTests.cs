@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace Zooper.Tools.Marten.ApplyEnforcer.Tests;
@@ -107,7 +106,7 @@ public sealed class ProjectionEnforcementTests
 
     private static ImmutableArray<Diagnostic> GetDiagnostics(CompilationResult result, string id)
     {
-        return result.AnalyzerDiagnostics.Where(diagnostic => diagnostic.Id == id).ToImmutableArray();
+        return [..result.AnalyzerDiagnostics.Where(diagnostic => diagnostic.Id == id)];
     }
 
     private const string CommonPreamble = """

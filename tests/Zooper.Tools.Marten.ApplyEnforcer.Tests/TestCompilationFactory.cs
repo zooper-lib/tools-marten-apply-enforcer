@@ -18,7 +18,8 @@ internal static class TestCompilationFactory
         var compilation = CreateCompilation(sources);
         var generator = new EventSourcedProjectionGenerator();
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
-        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generatorDiagnostics);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation,
+            out var generatorDiagnostics);
 
         var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(
             new ProjectionCoverageAnalyzer(),
@@ -35,7 +36,7 @@ internal static class TestCompilationFactory
             driver.GetRunResult());
     }
 
-    public static CSharpCompilation CreateCompilation(params string[] sources)
+    private static CSharpCompilation CreateCompilation(params string[] sources)
     {
         var syntaxTrees = sources
             .Select((source, index) => CSharpSyntaxTree.ParseText(source, ParseOptions, $"Source{index}.cs"))
@@ -57,7 +58,7 @@ internal static class TestCompilationFactory
         {
             typeof(object).Assembly.Location,
             typeof(EventSourcedProjectionAttribute).Assembly.Location,
-            typeof(Zooper.Lion.Domain.Events.IDomainEvent).Assembly.Location,
+            typeof(Lion.Domain.Events.IDomainEvent).Assembly.Location,
             typeof(global::Marten.Events.Dcb.IEventBoundary<>).Assembly.Location,
         };
 
@@ -65,7 +66,7 @@ internal static class TestCompilationFactory
             .Concat(additionalAssemblies)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(path => MetadataReference.CreateFromFile(path))
-            .ToArray();
+            .ToArray<MetadataReference>();
     }
 }
 

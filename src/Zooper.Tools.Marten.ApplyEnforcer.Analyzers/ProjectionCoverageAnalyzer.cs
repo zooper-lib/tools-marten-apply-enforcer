@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -9,7 +8,7 @@ namespace Zooper.Tools.Marten.ApplyEnforcer.Analyzers;
 public sealed class ProjectionCoverageAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticCatalog.MissingConventionHandler);
+        [DiagnosticCatalog.MissingConventionHandler];
 
     public override void Initialize(AnalysisContext context)
     {
