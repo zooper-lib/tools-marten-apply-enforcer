@@ -61,7 +61,7 @@ internal static class TestCompilationFactory
         var additionalAssemblies = new[]
         {
             typeof(object).Assembly.Location,
-            typeof(EventSourcedProjectionAttribute).Assembly.Location,
+            typeof(EventSourcedAggregateAttribute).Assembly.Location,
             typeof(Lion.Domain.Events.IDomainEvent).Assembly.Location,
             typeof(global::Marten.Events.Dcb.IEventBoundary<>).Assembly.Location,
         };

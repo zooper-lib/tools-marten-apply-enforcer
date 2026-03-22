@@ -1,9 +1,11 @@
-name: Build and Publish
+name: Publish Preview
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - develop
+
+  workflow_dispatch:
 
 permissions:
   contents: read

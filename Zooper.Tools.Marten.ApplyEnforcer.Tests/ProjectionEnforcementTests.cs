@@ -18,14 +18,15 @@ public sealed class ProjectionEnforcementTests
             Environment.NewLine,
             result.GeneratorRunResult.Results.SelectMany(generator => generator.GeneratedSources).Select(source => source.SourceText.ToString()));
 
-        Assert.Contains("OrderProjectionEventCoverage", generatedSource);
-        Assert.Contains("typeof(global::Demo.OrderCreated)", generatedSource);
-        Assert.Contains("typeof(global::Demo.ItemAdded)", generatedSource);
-        Assert.Contains("typeof(global::Demo.OrderCancelled)", generatedSource);
+        Assert.Contains("OrderEventCoverage", generatedSource);
+        Assert.Contains("typeof(global::Demo.IOrderCreated)", generatedSource);
+        Assert.Contains("typeof(global::Demo.IItemAdded)", generatedSource);
+        Assert.Contains("typeof(global::Demo.IOrderCancelled)", generatedSource);
+        Assert.DoesNotContain("V1", generatedSource);
     }
 
     [Fact]
-    public async Task Coverage_analyzer_allows_fully_covered_projection()
+    public async Task Coverage_analyzer_allows_fully_covered_aggregate()
     {
         var result = await TestCompilationFactory.RunAsync(AllHandlersCoveredSource);
 
@@ -39,22 +40,14 @@ public sealed class ProjectionEnforcementTests
         var result = await TestCompilationFactory.RunAsync(MissingHandlerSource);
         var diagnostic = Assert.Single(GetDiagnostics(result, "MARTEN001"));
 
-        Assert.Contains("OrderProjection", diagnostic.GetMessage());
-        Assert.Contains("OrderArchived", diagnostic.GetMessage());
+        Assert.Contains("Order", diagnostic.GetMessage());
+        Assert.Contains("IOrderArchived", diagnostic.GetMessage());
     }
 
     [Fact]
-    public async Task Coverage_analyzer_combines_partial_projection_types()
+    public async Task Coverage_analyzer_combines_partial_aggregate_types()
     {
-        var result = await TestCompilationFactory.RunAsync(PartialProjectionPartOne, PartialProjectionPartTwo);
-
-        Assert.Empty(GetDiagnostics(result, "MARTEN001"));
-    }
-
-    [Fact]
-    public async Task Coverage_analyzer_supports_single_stream_projection_hosts()
-    {
-        var result = await TestCompilationFactory.RunAsync(SingleStreamProjectionSource);
+        var result = await TestCompilationFactory.RunAsync(PartialAggregatePartOne, PartialAggregatePartTwo);
 
         Assert.Empty(GetDiagnostics(result, "MARTEN001"));
     }
@@ -110,12 +103,11 @@ public sealed class ProjectionEnforcementTests
 
     private static ImmutableArray<Diagnostic> GetDiagnostics(CompilationResult result, string id)
     {
-        return [..result.AnalyzerDiagnostics.Where(diagnostic => diagnostic.Id == id)];
+        return [.. result.AnalyzerDiagnostics.Where(diagnostic => diagnostic.Id == id)];
     }
 
     private const string CommonPreamble = """
 using System;
-using Marten.Events.Aggregation;
 using Marten.Events.Dcb;
 using Zooper.Lion.Domain.Entities;
 using Zooper.Tools.Marten.ApplyEnforcer.Contracts;
@@ -124,135 +116,149 @@ namespace Demo;
 """;
 
     private const string AllHandlersCoveredSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+[EventSourcedAggregate]
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
+
+    public static Order Create(IOrderCreated domainEvent) => new();
+    public void Apply(IItemAdded domainEvent) { }
+    public void Apply(IOrderCancelled domainEvent) { }
 }
 
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection
+public interface IOrderCreated : IDomainEvent<Order>
 {
-    public static OrderProjection Create(OrderCreated domainEvent) => new();
-    public void Apply(ItemAdded domainEvent) { }
-    public void Apply(OrderCancelled domainEvent) { }
+    public sealed record V1(Guid OrderId) : IOrderCreated;
+}
+
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IOrderCancelled : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderCancelled;
 }
 """;
 
     private const string AllHandlersCoveredWithArchiveSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+[EventSourcedAggregate]
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
+
+    public static Order Create(IOrderCreated domainEvent) => new();
+    public void Apply(IItemAdded domainEvent) { }
+    public void Apply(IOrderCancelled domainEvent) { }
+    public void Apply(IOrderArchived domainEvent) { }
 }
 
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-public sealed record OrderArchived() : IDomainEvent<Order>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection
+public interface IOrderCreated : IDomainEvent<Order>
 {
-    public static OrderProjection Create(OrderCreated domainEvent) => new();
-    public void Apply(ItemAdded domainEvent) { }
-    public void Apply(OrderCancelled domainEvent) { }
-    public void Apply(OrderArchived domainEvent) { }
+    public sealed record V1(Guid OrderId) : IOrderCreated;
+}
+
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IOrderCancelled : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderCancelled;
+}
+
+public interface IOrderArchived : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderArchived;
 }
 """;
 
     private const string MissingHandlerSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+[EventSourcedAggregate]
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
+
+    public static Order Create(IOrderCreated domainEvent) => new();
+    public void Apply(IItemAdded domainEvent) { }
+    public void Apply(IOrderCancelled domainEvent) { }
 }
 
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-public sealed record OrderArchived() : IDomainEvent<Order>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection
+public interface IOrderCreated : IDomainEvent<Order>
 {
-    public static OrderProjection Create(OrderCreated domainEvent) => new();
-    public void Apply(ItemAdded domainEvent) { }
-    public void Apply(OrderCancelled domainEvent) { }
+    public sealed record V1(Guid OrderId) : IOrderCreated;
+}
+
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IOrderCancelled : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderCancelled;
+}
+
+public interface IOrderArchived : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderArchived;
 }
 """;
 
-    private const string PartialProjectionPartOne = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+    private const string PartialAggregatePartOne = CommonPreamble + """
+[EventSourcedAggregate]
+public sealed partial record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
+
+    public static Order Create(IOrderCreated domainEvent) => new();
+    public void Apply(IItemAdded domainEvent) { }
 }
 
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed partial class OrderProjection
-{
-    public static OrderProjection Create(OrderCreated domainEvent) => new();
-    public void Apply(ItemAdded domainEvent) { }
-}
+public interface IOrderCreated : IDomainEvent<Order>;
+public interface IItemAdded : IDomainEvent<Order>;
+public interface IOrderCancelled : IDomainEvent<Order>;
 """;
 
-    private const string PartialProjectionPartTwo = CommonPreamble + """
-public sealed partial class OrderProjection
+    private const string PartialAggregatePartTwo = CommonPreamble + """
+public sealed partial record Order
 {
-    public void Apply(OrderCancelled domainEvent) { }
-}
-""";
-
-    private const string SingleStreamProjectionSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
-{
-    public Guid Id { get; init; }
-}
-
-public sealed class OrderState
-{
-}
-
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection : SingleStreamProjection<OrderState, Guid>
-{
-    public static OrderState Create(OrderCreated domainEvent) => new();
-    public void Apply(ItemAdded domainEvent) { }
+    public void Apply(IOrderCancelled domainEvent) { }
 }
 """;
 
     private const string RawAppendSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
 }
 
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
 
 public static class OrderUseCase
 {
     public static void Append(IEventBoundary<Order> eventBoundary)
     {
-        eventBoundary.AppendOne(new ItemAdded("Widget"));
+        eventBoundary.AppendOne(new IItemAdded.V1("Widget"));
     }
 }
 """;
 
     private const string ApprovedWrapperSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
 }
 
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
 
 [ApprovedAppendWrapper]
 public static class OrderStreamExtensions
@@ -266,18 +272,25 @@ public static class OrderStreamExtensions
 """;
 
     private const string WrongAggregateEventSource = CommonPreamble + """
-public sealed class Order : IAggregateRoot<Guid>
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
 }
 
-public sealed class Invoice : IAggregateRoot<Guid>
+public sealed record Invoice : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
 }
 
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record InvoicePaid(Guid InvoiceId) : IDomainEvent<Invoice>;
+public interface IItemAdded : IDomainEvent<Order>
+{
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IInvoicePaid : IDomainEvent<Invoice>
+{
+    public sealed record V1(Guid InvoiceId) : IInvoicePaid;
+}
 
 [ApprovedAppendWrapper]
 public static class OrderStreamExtensions
@@ -293,7 +306,7 @@ public static class OrderUseCase
 {
     public static void Append(IEventBoundary<Order> eventBoundary)
     {
-        eventBoundary.AppendOrderEvent(new InvoicePaid(Guid.NewGuid()));
+        eventBoundary.AppendOrderEvent(new IInvoicePaid.V1(Guid.NewGuid()));
     }
 }
 """;
