@@ -6,8 +6,8 @@ internal static class DiagnosticCatalog
 {
     public static readonly DiagnosticDescriptor MissingConventionHandler = new(
         id: "MARTEN001",
-        title: "Projection is missing a Marten convention handler",
-        messageFormat: "Projection '{0}' is missing a Marten convention handler for event '{1}'. Add Apply({1} domainEvent), Create({1} domainEvent), or another approved handler.",
+        title: "Aggregate is missing a Marten convention handler",
+        messageFormat: "Aggregate '{0}' is missing a Marten convention handler for event '{1}'. Add Apply({1} domainEvent), Create({1} domainEvent), or another approved handler.",
         category: "Marten.ApplyEnforcement",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

@@ -76,7 +76,7 @@ public sealed class EventSourcedProjectionGenerator : IIncrementalGenerator
             return null;
         }
 
-        return SymbolHelpers.TryGetProjectionAggregate(symbol, out var aggregateType)
+        return SymbolHelpers.TryGetEventSourcedAggregate(symbol, out var aggregateType)
             ? new ProjectionCandidate(symbol, aggregateType!)
             : null;
     }
@@ -88,7 +88,7 @@ public sealed class EventSourcedProjectionGenerator : IIncrementalGenerator
             return null;
         }
 
-        if (context.SemanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol || symbol.IsAbstract)
+        if (context.SemanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol)
         {
             return null;
         }
