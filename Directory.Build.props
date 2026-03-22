@@ -7,7 +7,6 @@
         <PackageProjectUrl>https://github.com/zooper-lib/tools-marten-apply-enforcer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/zooper-lib/tools-marten-apply-enforcer</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageIcon>icon.png</PackageIcon>
         <PackageTags>marten;roslyn;analyzer;event-sourcing;apply;enforcer;C#</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Description>Roslyn analyzers and source generators that enforce correct Marten event sourcing Apply patterns.</Description>
@@ -28,7 +27,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" />
         <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
