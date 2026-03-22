@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-22
+
 ### Changed
 
 - **Breaking:** Replaced `[EventSourcedProjection(typeof(TAggregate))]` with parameterless `[EventSourcedAggregate]` attribute — the attribute is now placed directly on the aggregate instead of a separate projection class
