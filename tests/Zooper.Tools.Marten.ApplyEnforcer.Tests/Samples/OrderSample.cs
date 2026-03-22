@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Marten.Events.Dcb;
 using Zooper.Lion.Domain.Entities;
 using Zooper.Tools.Marten.ApplyEnforcer.Contracts;
