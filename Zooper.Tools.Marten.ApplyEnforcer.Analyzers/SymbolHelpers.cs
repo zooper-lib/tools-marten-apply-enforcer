@@ -10,7 +10,7 @@ internal static class SymbolHelpers
     private const string ContractsNamespace = "Zooper.Tools.Marten.ApplyEnforcer.Contracts";
     private const string MartenEventsNamespace = "Marten.Events.Dcb";
     private const string ApprovedAppendWrapperAttributeName = "ApprovedAppendWrapperAttribute";
-    private const string EventSourcedProjectionAttributeName = "EventSourcedProjectionAttribute";
+    private const string EventSourcedAggregateAttributeName = "EventSourcedAggregateAttribute";
     private const string GenericDomainEventName = "IDomainEvent`1";
     private const string MartenEventBoundaryName = "IEventBoundary`1";
 
@@ -40,11 +40,6 @@ internal static class SymbolHelpers
 
         foreach (var candidate in GetAllTypes(compilation.Assembly.GlobalNamespace))
         {
-            if (candidate.IsAbstract)
-            {
-                continue;
-            }
-
             if (!ImplementsAggregateEvent(candidate, aggregateType))
             {
                 continue;
@@ -121,7 +116,7 @@ internal static class SymbolHelpers
     {
         return
         [
-            ..candidate.AllInterfaces
+            ..candidate.Interfaces
                 .Where(@interface =>
                     HasMetadataName(@interface.OriginalDefinition, ContractsNamespace, GenericDomainEventName))
                 .Select(@interface => @interface.TypeArguments[0] as INamedTypeSymbol)
@@ -132,25 +127,20 @@ internal static class SymbolHelpers
         ];
     }
 
-    public static bool TryGetProjectionAggregate(INamedTypeSymbol candidate, out INamedTypeSymbol? aggregateType)
+    public static bool TryGetEventSourcedAggregate(INamedTypeSymbol candidate, out INamedTypeSymbol? aggregateType)
     {
         aggregateType = null;
 
         foreach (var attribute in candidate.GetAttributes())
         {
             if (attribute.AttributeClass is null || !HasMetadataName(attribute.AttributeClass, ContractsNamespace,
-                    EventSourcedProjectionAttributeName))
+                    EventSourcedAggregateAttributeName))
             {
                 continue;
             }
 
-            if (attribute.ConstructorArguments.Length != 1)
-            {
-                return false;
-            }
-
-            aggregateType = attribute.ConstructorArguments[0].Value as INamedTypeSymbol;
-            return aggregateType is not null;
+            aggregateType = candidate;
+            return true;
         }
 
         return false;
@@ -177,7 +167,7 @@ internal static class SymbolHelpers
 
     private static bool ImplementsAggregateEvent(INamedTypeSymbol candidate, INamedTypeSymbol aggregateType)
     {
-        return candidate.AllInterfaces.Any(@interface =>
+        return candidate.Interfaces.Any(@interface =>
             HasMetadataName(@interface.OriginalDefinition, ContractsNamespace, GenericDomainEventName) &&
             SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], aggregateType));
     }

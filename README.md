@@ -4,7 +4,7 @@ Roslyn analyzers and source generators that enforce correct [Marten](https://mar
 
 ## The Problem
 
-Marten rebuilds aggregate state from events using convention-based methods (`Create`, `Apply`, `ShouldDelete`), but there's no compile-time enforcement. When a developer introduces a new domain event and forgets to add the corresponding handler, the projection silently produces incorrect state at runtime. Similarly, raw Marten append calls (`AppendOne`, `AppendMany`) bypass type safety entirely — nothing prevents appending events that don't belong to a given aggregate's stream.
+Marten rebuilds aggregate state from events using convention-based methods (`Create`, `Apply`, `ShouldDelete`), but there's no compile-time enforcement. When a developer introduces a new domain event and forgets to add the corresponding handler on the aggregate, the projection silently produces incorrect state at runtime. Similarly, raw Marten append calls (`AppendOne`, `AppendMany`) bypass type safety entirely — nothing prevents appending events that don't belong to a given aggregate's stream.
 
 ## The Solution
 
@@ -13,7 +13,7 @@ This toolkit provides **zero-runtime-cost, compile-time enforcement** through th
 | Component | What it does |
 |---|---|
 | **Source Generator** | Automatically discovers all events for an aggregate via `IDomainEvent<TAggregate>` |
-| **Coverage Analyzer** | Fails the build when a projection is missing a handler for a discovered event (MARTEN001) |
+| **Coverage Analyzer** | Fails the build when an aggregate is missing a handler for a discovered event (MARTEN001) |
 | **Raw Append Analyzer** | Fails the build when code directly calls `AppendOne`/`AppendMany` outside an approved wrapper (MARTEN002) |
 
 No manual event lists. No runtime reflection. Just add a new event and the compiler tells you exactly what's missing.
@@ -22,7 +22,7 @@ No manual event lists. No runtime reflection. Just add a new event and the compi
 
 | ID | Severity | Description |
 |---|---|---|
-| **MARTEN001** | Error | Projection is missing a Marten convention handler for a discovered domain event |
+| **MARTEN001** | Error | Aggregate is missing a Marten convention handler for a discovered domain event |
 | **MARTEN002** | Error | Raw Marten append call used outside an approved wrapper class |
 
 ## Quick Start
@@ -39,39 +39,60 @@ No manual event lists. No runtime reflection. Just add a new event and the compi
                   IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
 ```
 
-### 2. Declare your events with aggregate affinity
+### 2. Declare your events as versioned interfaces
 
 ```csharp
-public sealed class Order : IAggregateRoot<Guid> { }
-
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-```
-
-The `IDomainEvent<TAggregate>` interface is the source of truth — the generator uses it to automatically discover every event belonging to an aggregate.
-
-### 3. Write your projection
-
-```csharp
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection :
-    ICreate<OrderCreated, OrderProjection>,
-    IApply<ItemAdded>,
-    IApply<OrderCancelled>
+public interface IOrderCreated : IDomainEvent<Order>
 {
-    public List<string> Items { get; } = [];
-    public bool IsCancelled { get; private set; }
+    Guid OrderId { get; }
 
-    public static OrderProjection Create(OrderCreated e) => new();
-    public void Apply(ItemAdded e) => Items.Add(e.ItemName);
-    public void Apply(OrderCancelled e) => IsCancelled = true;
+    public sealed record V1(Guid OrderId) : IOrderCreated;
+}
+
+public interface IItemAdded : IDomainEvent<Order>
+{
+    string ItemName { get; }
+
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IOrderCancelled : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderCancelled;
 }
 ```
 
-The `[EventSourcedProjection(typeof(Order))]` attribute is a **one-time declaration** — it never needs updating when new events are added.
+The `IDomainEvent<TAggregate>` interface is the source of truth — the generator discovers every event belonging to an aggregate by finding types that **directly** implement it.
 
-If you now introduce a new `IDomainEvent<Order>` without adding a handler to `OrderProjection`, the build fails with **MARTEN001**.
+Versioned concrete types (e.g. `V1`) are nested inside the event interface. Because they implement the interface — not `IDomainEvent<T>` directly — they are **not** counted as separate events.
+
+### 3. Write your aggregate with Create/Apply handlers
+
+```csharp
+[EventSourcedAggregate]
+public sealed record Order : IAggregateRoot<Guid>
+{
+    public Guid Id { get; init; }
+    public List<string> Items { get; } = [];
+    public bool IsCancelled { get; private set; }
+
+    public static Order Create(IOrderCreated domainEvent) => new();
+
+    public void Apply(IItemAdded domainEvent)
+    {
+        Items.Add(domainEvent.ItemName);
+    }
+
+    public void Apply(IOrderCancelled domainEvent)
+    {
+        IsCancelled = true;
+    }
+}
+```
+
+The `[EventSourcedAggregate]` attribute is a **one-time declaration** — it never needs updating when new events are added.
+
+If you now introduce a new `IDomainEvent<Order>` without adding a handler to `Order`, the build fails with **MARTEN001**.
 
 ### 4. Create a typed append wrapper
 
@@ -80,7 +101,7 @@ If you now introduce a new `IDomainEvent<Order>` without adding a handler to `Or
 public static class OrderStreamExtensions
 {
     public static void AppendOrderEvent<TEvent>(
-        this IEventBoundary<OrderProjection> stream,
+        this IEventBoundary<Order> stream,
         TEvent @event)
         where TEvent : IDomainEvent<Order>
     {
@@ -95,10 +116,10 @@ The `where TEvent : IDomainEvent<Order>` constraint ensures only events that bel
 
 ```csharp
 // ✅ Compiles — type-safe and enforced
-eventStream.AppendOrderEvent(new ItemAdded("Widget"));
+eventStream.AppendOrderEvent(new IItemAdded.V1("Widget"));
 
 // ❌ MARTEN002 — raw Marten append is forbidden
-eventStream.AppendOne(new ItemAdded("Widget"));
+eventStream.AppendOne(new IItemAdded.V1("Widget"));
 ```
 
 ## Supported Handler Conventions
@@ -107,7 +128,7 @@ The coverage analyzer recognizes the following Marten convention methods:
 
 | Method | Signature | Purpose |
 |---|---|---|
-| `Create` | `public static TProjection Create(TEvent e)` | Initial projection creation from the first event |
+| `Create` | `public static TAggregate Create(TEvent e)` | Initial aggregate creation from the first event |
 | `Apply` | `public void Apply(TEvent e)` | State mutation from subsequent events |
 | `ShouldDelete` | `public bool ShouldDelete(TEvent e)` | Deletion criteria for a given event |
 
@@ -116,9 +137,7 @@ The coverage analyzer recognizes the following Marten convention methods:
 | Type | Kind | Purpose |
 |---|---|---|
 | `IDomainEvent<TAggregate>` | Interface | Declares which aggregate an event belongs to |
-| `IApply<TEvent>` | Interface | Instance-based state evolution contract |
-| `ICreate<TEvent, TProjection>` | Interface | Static-abstract creation contract |
-| `EventSourcedProjectionAttribute` | Attribute | Marks a type as a projection for a specific aggregate |
+| `EventSourcedAggregateAttribute` | Attribute | Marks a type as an aggregate requiring event coverage enforcement |
 | `ApprovedAppendWrapperAttribute` | Attribute | Marks a class as an approved wrapper for raw Marten appends |
 
 ## How It Works
@@ -137,7 +156,7 @@ The coverage analyzer recognizes the following Marten convention methods:
                    └─────────┬─────────┘
                              │
               ┌──────────────▼──────────────┐
-              │   Coverage Analyzer         │  ← Checks projection has handler
+              │   Coverage Analyzer         │  ← Checks aggregate has handler
               │   (MARTEN001)               │    for every discovered event
               └─────────────────────────────┘
 
@@ -147,8 +166,8 @@ The coverage analyzer recognizes the following Marten convention methods:
               └─────────────────────────────┘
 ```
 
-1. **At build time**, the source generator scans the compilation for all concrete types implementing `IDomainEvent<TAggregate>` and emits a `Type[]` array per aggregate.
-2. **The coverage analyzer** inspects every `[EventSourcedProjection]`-decorated type and verifies it has a matching `Create`, `Apply`, or `ShouldDelete` handler for each discovered event. Missing handlers produce **MARTEN001**.
+1. **At build time**, the source generator scans the compilation for all types that **directly** implement `IDomainEvent<TAggregate>` and emits a `Type[]` array per aggregate. Versioned concrete types nested inside event interfaces are excluded because they inherit `IDomainEvent<T>` transitively, not directly.
+2. **The coverage analyzer** inspects every `[EventSourcedAggregate]`-decorated type and verifies it has a matching `Create`, `Apply`, or `ShouldDelete` handler for each discovered event. Missing handlers produce **MARTEN001**.
 3. **The raw append analyzer** inspects all method invocations and flags direct calls to `AppendOne` or `AppendMany` unless the containing type is marked with `[ApprovedAppendWrapper]`. Violations produce **MARTEN002**.
 
 ## Requirements

@@ -6,59 +6,63 @@ using Zooper.Tools.Marten.ApplyEnforcer.Contracts;
 
 namespace Zooper.Tools.Marten.ApplyEnforcer.Tests.Samples;
 
-public sealed class Order : IAggregateRoot<Guid>
+[EventSourcedAggregate]
+public sealed record Order : IAggregateRoot<Guid>
 {
     public Guid Id { get; init; }
-}
-
-public sealed class Invoice : IAggregateRoot<Guid>
-{
-    public Guid Id { get; init; }
-}
-
-public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
-
-public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
-
-public sealed record OrderCancelled() : IDomainEvent<Order>;
-
-public sealed record InvoicePaid(Guid InvoiceId) : IDomainEvent<Invoice>;
-
-[EventSourcedProjection(typeof(Order))]
-public sealed class OrderProjection :
-    ICreate<OrderCreated, OrderProjection>,
-    IApply<ItemAdded>,
-    IApply<OrderCancelled>
-{
-    public Guid Id { get; private set; }
 
     public List<string> Items { get; } = [];
 
     public bool IsCancelled { get; private set; }
 
-    public static OrderProjection Create(OrderCreated domainEvent)
-    {
-        return new OrderProjection
-        {
-            Id = domainEvent.OrderId,
-        };
-    }
+    public static Order Create(IOrderCreated domainEvent) => new();
 
-    public void Apply(ItemAdded domainEvent)
+    public void Apply(IItemAdded domainEvent)
     {
         Items.Add(domainEvent.ItemName);
     }
 
-    public void Apply(OrderCancelled domainEvent)
+    public void Apply(IOrderCancelled domainEvent)
     {
         IsCancelled = true;
     }
 }
 
+public sealed record Invoice : IAggregateRoot<Guid>
+{
+    public Guid Id { get; init; }
+}
+
+public interface IOrderCreated : IDomainEvent<Order>
+{
+    Guid OrderId { get; }
+
+    public sealed record V1(Guid OrderId) : IOrderCreated;
+}
+
+public interface IItemAdded : IDomainEvent<Order>
+{
+    string ItemName { get; }
+
+    public sealed record V1(string ItemName) : IItemAdded;
+}
+
+public interface IOrderCancelled : IDomainEvent<Order>
+{
+    public sealed record V1() : IOrderCancelled;
+}
+
+public interface IInvoicePaid : IDomainEvent<Invoice>
+{
+    Guid InvoiceId { get; }
+
+    public sealed record V1(Guid InvoiceId) : IInvoicePaid;
+}
+
 [ApprovedAppendWrapper]
 public static class OrderStreamExtensions
 {
-    public static void AppendOrderEvent<TEvent>(this IEventBoundary<OrderProjection> eventBoundary, TEvent domainEvent)
+    public static void AppendOrderEvent<TEvent>(this IEventBoundary<Order> eventBoundary, TEvent domainEvent)
         where TEvent : IDomainEvent<Order>
     {
         eventBoundary.AppendOne(domainEvent);
