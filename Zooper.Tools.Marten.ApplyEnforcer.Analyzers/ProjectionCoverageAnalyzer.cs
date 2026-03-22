@@ -21,7 +21,7 @@ public sealed class ProjectionCoverageAnalyzer : DiagnosticAnalyzer
     private static void AnalyzeProjectionHost(SymbolAnalysisContext context)
     {
         var hostType = (INamedTypeSymbol)context.Symbol;
-        if (!SymbolHelpers.TryGetProjectionAggregate(hostType, out var aggregateType) || aggregateType is null)
+        if (!SymbolHelpers.TryGetEventSourcedAggregate(hostType, out var aggregateType) || aggregateType is null)
         {
             return;
         }
