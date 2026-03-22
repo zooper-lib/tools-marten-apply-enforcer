@@ -39,32 +39,23 @@ No manual event lists. No runtime reflection. Just add a new event and the compi
                   IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
 ```
 
-### 2. Declare your events as versioned interfaces
+### 2. Declare your events
+
+Events just need to implement `IDomainEvent<TAggregate>`. How you structure them is up to you:
 
 ```csharp
-public interface IOrderCreated : IDomainEvent<Order>
-{
-    Guid OrderId { get; }
+// Simple records
+public sealed record OrderCreated(Guid OrderId) : IDomainEvent<Order>;
+public sealed record ItemAdded(string ItemName) : IDomainEvent<Order>;
 
-    public sealed record V1(Guid OrderId) : IOrderCreated;
-}
-
-public interface IItemAdded : IDomainEvent<Order>
-{
-    string ItemName { get; }
-
-    public sealed record V1(string ItemName) : IItemAdded;
-}
-
+// Versioned interfaces with nested concrete types
 public interface IOrderCancelled : IDomainEvent<Order>
 {
     public sealed record V1() : IOrderCancelled;
 }
 ```
 
-The `IDomainEvent<TAggregate>` interface is the source of truth — the generator discovers every event belonging to an aggregate by finding types that **directly** implement it.
-
-Versioned concrete types (e.g. `V1`) are nested inside the event interface. Because they implement the interface — not `IDomainEvent<T>` directly — they are **not** counted as separate events.
+The generator discovers events by finding types that **directly** implement `IDomainEvent<TAggregate>`. If you use the versioned interface pattern, only the interface itself is counted — nested types like `V1` are not, since they inherit `IDomainEvent<T>` transitively.
 
 ### 3. Write your aggregate with Create/Apply handlers
 
@@ -76,9 +67,9 @@ public sealed record Order : IAggregateRoot<Guid>
     public List<string> Items { get; } = [];
     public bool IsCancelled { get; private set; }
 
-    public static Order Create(IOrderCreated domainEvent) => new();
+    public static Order Create(OrderCreated domainEvent) => new();
 
-    public void Apply(IItemAdded domainEvent)
+    public void Apply(ItemAdded domainEvent)
     {
         Items.Add(domainEvent.ItemName);
     }
@@ -166,7 +157,7 @@ The coverage analyzer recognizes the following Marten convention methods:
               └─────────────────────────────┘
 ```
 
-1. **At build time**, the source generator scans the compilation for all types that **directly** implement `IDomainEvent<TAggregate>` and emits a `Type[]` array per aggregate. Versioned concrete types nested inside event interfaces are excluded because they inherit `IDomainEvent<T>` transitively, not directly.
+1. **At build time**, the source generator scans the compilation for all types that **directly** implement `IDomainEvent<TAggregate>` and emits a `Type[]` array per aggregate. Only direct implementors are counted — if you use versioned interfaces, nested types like `V1` are automatically excluded.
 2. **The coverage analyzer** inspects every `[EventSourcedAggregate]`-decorated type and verifies it has a matching `Create`, `Apply`, or `ShouldDelete` handler for each discovered event. Missing handlers produce **MARTEN001**.
 3. **The raw append analyzer** inspects all method invocations and flags direct calls to `AppendOne` or `AppendMany` unless the containing type is marked with `[ApprovedAppendWrapper]`. Violations produce **MARTEN002**.
 
